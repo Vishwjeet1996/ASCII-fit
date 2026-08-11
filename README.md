@@ -11,7 +11,7 @@ Convert images to ASCII art and animate the result — gradient-descent glyph fi
   - `traditional` — each cell is mapped straight onto a brightness ramp (fast, classic).
 ![](examples/comparison.png)
 
-- **Lineart → ASCII** — clean, high-contrast line drawings and sketches convert especially well; pair with the **block** or **minimal** character sets for crisp line rendering.
+- **Lineart → ASCII** — clean, high-contrast line drawings and sketches convert especially well.
 ![](examples/convert-lineart.png)
 
 - **Text logos / wordmarks → ASCII** — render text, logos, and typography-based graphics into ASCII art.
