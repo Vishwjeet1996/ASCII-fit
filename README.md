@@ -1,6 +1,7 @@
 # ASCII-fit
 
 Convert images to ASCII art and animate the result — gradient-descent glyph fitting, wave animation, mouse ripples, and a procedural plasma field, all rendered on a single canvas.
+![](examples/3d-effect-skull.gif)
 
 ## Features
 
