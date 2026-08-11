@@ -25,6 +25,7 @@ Convert images to ASCII art and animate the result — gradient-descent glyph fi
 
 - **Mouse ripples** — click or click-drag over the output to disturb the field.
 - **Procedural plasma** — summed sine waves mapped to a character ramp and a color band, animatable on top of a fitted image or standalone.
+
 ![](examples/plasma-skull.gif)
 
 - **Export** — copy the ASCII as text, download as `.txt`, render to `.png`, or export an animated `.gif`.
