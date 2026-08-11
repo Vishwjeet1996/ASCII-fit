@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCIIfit — image to ascii + wave</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">glyph-error minimization or traditional brightness ramp + canvas animations</p>
+    <h1>ASCII-fit<span class="cursor">&nbsp;</span></h1>
+    <p class="sub">Upload an image. Choose a method: gradient descent or traditional mapping. Run Fit. The result will be rendered on one canvas.</p>
+  </header>
+
+  <div class="top-row">
+    <div class="panel source-panel">
+      <h2>source</h2>
+      <div class="drop" id="drop">
+        <strong>drop image, or click</strong>
+        png / jpg / webp — processed locally
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      <img id="thumb" class="thumb">
+    </div>
+  </div>
+
+  <div class="cards-row">
+      <div class="panel">
+        <h2>fit parameters</h2>
+
+        <label class="field">
+          <div class="field-row"><span>output columns</span><b id="colsVal">120</b></div>
+          <input type="range" id="cols" min="40" max="240" step="4" value="120">
+        </label>
+
+        <label class="field">
+          <div class="field-row"><span>fit method</span></div>
+          <select id="fitMethod">
+            <option value="gradient" selected>gradient descent — per-glyph error match</option>
+            <option value="traditional">traditional — brightness ramp mapping</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <div class="field-row"><span>character set</span></div>
+          <select id="charset">
+            <option value="dense">dense — full tonal range</option>
+            <option value="blocks">block glyphs — high contrast</option>
+            <option value="minimal">minimal — 10 levels</option>
+            <option value="binary">binary — two glyphs only</option>
+            <option value="custom">custom — type your own set</option>
+          </select>
+          <input type="text" id="customCharset" class="custom-charset" value=" .:-=+*#%@" placeholder="type custom characters, lightest to darkest" spellcheck="false" hidden>
+          <div class="charset-preview" id="charsetPreview"></div>
+        </label>
+
+        <label class="field">
+          <div class="field-row"><span>contrast</span><b id="contrastVal">1.00</b></div>
+          <input type="range" id="contrast" min="0.4" max="2.2" step="0.05" value="1.0">
+        </label>
+
+        <label class="field">
+          <div class="field-row toggle-row">
+            <span>invert (light bg)</span>
+            <div class="switch" id="invertToggle"></div>
+          </div>
+        </label>
+
+        <label class="field">
+          <div class="field-row toggle-row">
+            <span>color glyphs</span>
+            <div class="switch" id="colorToggle"></div>
+          </div>
+        </label>
+
+        <button class="run" id="runBtn" disabled>run fit</button>
+      </div>
+
+      <div class="panel">
+        <h2>wave animation <span class="anim-badge" id="animBadge">off</span></h2>
+
+        <label class="field">
+          <div class="field-row toggle-row">
+            <span>enable wave</span>
+            <div class="switch" id="animToggle"></div>
+          </div>
+        </label>
+
+        <label class="field">
+          <div class="field-row"><span>mode</span></div>
+          <select id="waveMode">
+            <option value="horizontal">horizontal</option>
+            <option value="vertical">vertical</option>
+            <option value="water" selected>water (dual-axis)</option>
+            <option value="radial">radial</option>
+            <option value="turbulence">turbulence</option>
+            <option value="perspective3d">3d perspective</option>
+          </select>
+        </label>
+
+        <div class="anim-params">
+          <label class="field">
+            <div class="field-row"><span>amplitude</span><b id="ampVal">3.0</b></div>
+            <input type="range" id="amplitude" min="0.5" max="18" step="0.5" value="3.0">
+          </label>
+          <label class="field">
+            <div class="field-row"><span>speed</span><b id="speedVal">1.2</b></div>
+            <input type="range" id="speed" min="0.1" max="4.0" step="0.1" value="1.2">
+          </label>
+          <label class="field">
+            <div class="field-row"><span>frequency</span><b id="freqVal">0.12</b></div>
+            <input type="range" id="frequency" min="0.02" max="0.50" step="0.01" value="0.12">
+          </label>
+          <label class="field">
+            <div class="field-row"><span>phase offset</span><b id="phaseVal">0.00</b></div>
+            <input type="range" id="phase" min="0" max="6.28" step="0.05" value="0.0">
+          </label>
+          <label class="field" id="rotateXField" style="display:none">
+            <div class="field-row"><span>rotate x (tilt)</span><b id="rotateXVal">0.0</b></div>
+            <input type="range" id="rotateX" min="-2.0" max="2.0" step="0.1" value="0.0">
+          </label>
+          <label class="field" id="rotateYField" style="display:none">
+            <div class="field-row"><span>rotate y (spin)</span><b id="rotateYVal">0.3</b></div>
+            <input type="range" id="rotateY" min="-2.0" max="2.0" step="0.1" value="0.3">
+          </label>
+        </div>
+
+        <label class="field" style="margin-top:12px">
+          <div class="field-row toggle-row">
+            <span>mouse ripples <span style="color:var(--phosphor-dim);font-size:10px">move over output</span></span>
+            <div class="switch on" id="rippleToggle"></div>
+          </div>
+        </label>
+
+        <label class="field">
+          <div class="field-row"><span>ripple strength</span><b id="rippleStrengthVal">7.0</b></div>
+          <input type="range" id="rippleStrength" min="1" max="18" step="0.5" value="7.0">
+        </label>
+      </div>
+      <div class="panel">
+        <h2>procedural plasma <span class="anim-badge" id="plasmaBadge">off</span></h2>
+        <p style="margin:0 0 14px;font-size:11.5px;color:#7f9179;line-height:1.6" id="plasmaHint">Run a fit first and plasma will animate <em>on top of it</em>, keeping the ascii shape intact and only cycling color; without a fit it generates its own free-floating field.</p>
+
+        <label class="field">
+          <div class="field-row toggle-row">
+            <span>enable plasma</span>
+            <div class="switch" id="plasmaToggle"></div>
+          </div>
+        </label>
+
+        <label class="field">
+          <div class="field-row"><span>palette</span></div>
+          <select id="plasmaPalette">
+            <option value="classic" selected>classic — blue→cyan→green→yellow→red→magenta</option>
+            <option value="fire">fire — ember to white-hot</option>
+            <option value="mono">mono phosphor — green ramp</option>
+            <option value="ocean">ocean — teal to foam</option>
+          </select>
+        </label>
+
+        <div class="anim-params">
+          <label class="field">
+            <div class="field-row"><span>field scale</span><b id="plasmaScaleVal">1.0</b></div>
+            <input type="range" id="plasmaScale" min="0.2" max="3" step="0.1" value="1.0">
+          </label>
+          <label class="field">
+            <div class="field-row"><span>speed</span><b id="plasmaSpeedVal">1.0</b></div>
+            <input type="range" id="plasmaSpeed" min="0.1" max="4" step="0.1" value="1.0">
+          </label>
+          <label class="field">
+            <div class="field-row"><span>columns</span><b id="plasmaColsVal">100</b></div>
+            <input type="range" id="plasmaCols" min="40" max="220" step="4" value="100">
+          </label>
+          <label class="field">
+            <div class="field-row"><span>rows</span><b id="plasmaRowsVal">46</b></div>
+            <input type="range" id="plasmaRows" min="16" max="100" step="2" value="46">
+          </label>
+        </div>
+
+        <button class="run" id="plasmaRunBtn">run plasma field</button>
+      </div>
+  </div>
+
+    <div class="output-row">
+    <div class="panel output-panel">
+        <div class="output-head">
+          <h2>output</h2>
+          <div class="actions">
+            <button id="copyBtn" disabled>copy text</button>
+            <button id="downloadTxt" disabled>.txt</button>
+            <button id="downloadPng" disabled>.png</button>
+            <button id="exportGif" disabled>export gif</button>
+          </div>
+        </div>
+
+        <label class="field" style="max-width:260px;margin:0 0 14px">
+          <div class="field-row"><span>gif length</span><b id="gifDurationVal">3s</b></div>
+          <input type="range" id="gifDuration" min="3" max="7" step="1" value="3">
+        </label>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <div class="placeholder" id="placeholder">no source loaded <span class="arrow"> → </span> upload an image above to begin fitting</div>
+          <canvas id="asciiCanvas" hidden></canvas>
+        </div>
+
+        <div class="cost-strip" id="costStrip">
+          <div class="row"><span id="costLabel">mean reconstruction error</span><b id="costVal">—</b></div>
+          <div class="cost-bar"><div class="cost-bar-fill" id="costBar"></div></div>
+          <div class="cost-log" id="costLog"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <a class="bmc-btn" href="https://ko-fi.com/vishwajeetdamor" target="_blank" rel="noopener"><svg class="bmc-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg> Buy me a coffee</a>
+    <div class="foot-note">Have Fun!</div>
+  </footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
