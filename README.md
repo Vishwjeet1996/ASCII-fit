@@ -19,6 +19,8 @@ Convert images to ASCII art and animate the result — gradient-descent glyph fi
 
 - **Customizable character sets** — dense, block glyphs, minimal, binary, or a **custom** set you type yourself.
 - **Wave animation** — horizontal, vertical, water (dual-axis), radial, turbulence, and 3D perspective modes with amplitude/speed/frequency/phase controls.
+![](examples/wave-animation.gif)
+
 - **Mouse ripples** — click or click-drag over the output to disturb the field.
 - **Procedural plasma** — summed sine waves mapped to a character ramp and a color band, animatable on top of a fitted image or standalone.
 - **Export** — copy the ASCII as text, download as `.txt`, render to `.png`, or export an animated `.gif`.
