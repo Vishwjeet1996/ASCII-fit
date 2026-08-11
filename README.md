@@ -1,6 +1,7 @@
 # ASCII-fit
 
 Convert images to ASCII art and animate the result — gradient-descent glyph fitting, wave animation, mouse ripples, and a procedural plasma field, all rendered on a single canvas.
+
 ![](examples/3d-effect-skull.gif)
 
 ## Features
@@ -8,8 +9,14 @@ Convert images to ASCII art and animate the result — gradient-descent glyph fi
 - **Two fit methods**:
   - `gradient descent` — each cell is matched to the character that minimizes per-glyph reconstruction error.
   - `traditional` — each cell is mapped straight onto a brightness ramp (fast, classic).
+![](examples/comparison.png)
+
 - **Lineart → ASCII** — clean, high-contrast line drawings and sketches convert especially well; pair with the **block** or **minimal** character sets for crisp line rendering.
+![](examples/convert-lineart.png)
+
 - **Text logos / wordmarks → ASCII** — render text, logos, and typography-based graphics into ASCII art.
+![](examples/3d-effect-logo.gif)
+
 - **Customizable character sets** — dense, block glyphs, minimal, binary, or a **custom** set you type yourself.
 - **Wave animation** — horizontal, vertical, water (dual-axis), radial, turbulence, and 3D perspective modes with amplitude/speed/frequency/phase controls.
 - **Mouse ripples** — click or click-drag over the output to disturb the field.
