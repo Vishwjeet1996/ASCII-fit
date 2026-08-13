@@ -36,7 +36,9 @@ Everything is processed locally in the browser; no images leave your machine.
 
 ## Usage
 
-Open `index.html` in a browser. Drop any image (png / jpg / webp / gif / svg / …) onto the source panel, adjust the fit parameters, then hit **run fit**. Toggle wave / plasma on and press **export gif** for an animation.
+Download. Open `index.html` in a browser. Drop any image (png / jpg / webp / gif / svg / …) onto the source panel, adjust the fit parameters, then hit **run fit**. Toggle wave / plasma on and press **export gif** for an animation.
+
+Alternatively, try at: https://codeplusart.github.io/ASCII-fit/
 
 ## Project structure
 
