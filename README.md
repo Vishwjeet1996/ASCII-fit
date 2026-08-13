@@ -53,3 +53,9 @@ README.md    this file
 ## License
 
 GPL-3.0 — see [LICENSE.txt](LICENSE.txt).
+
+## Support
+
+If this tool was useful to you, consider buying me a coffee:
+
+[![Support on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/vishwajeetdamor)
