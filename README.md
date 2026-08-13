@@ -56,6 +56,6 @@ GPL-3.0 — see [LICENSE.txt](LICENSE.txt).
 
 ## Support
 
-If this tool was useful to you, consider buying me a coffee:
+If this tool was useful to you, feel free to buy me a coffee. Your support will be much appreciated:
 
 [![Support on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/vishwajeetdamor)
