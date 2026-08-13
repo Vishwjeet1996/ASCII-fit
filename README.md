@@ -23,7 +23,7 @@ Convert images to ASCII art and animate the result — gradient-descent glyph fi
 - **Wave animation** — horizontal, vertical, water (dual-axis), radial, turbulence, and 3D perspective modes with amplitude/speed/frequency/phase controls.
 ![](examples/wave-animation.gif)
 
-- **Mouse ripples** — click or click-drag over the output to disturb the field.
+- **Mouse ripples** — click or click-drag over the output.
 - **Procedural plasma** — summed sine waves mapped to a character ramp and a color band, animatable on top of a fitted image or standalone.
 
 ![](examples/plasma-skull.gif)
