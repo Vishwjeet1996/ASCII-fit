@@ -21,6 +21,7 @@
     contrast: document.getElementById('contrast'),
     contrastVal: document.getElementById('contrastVal'),
     invertToggle: document.getElementById('invertToggle'),
+    displayInvertToggle: document.getElementById('displayInvertToggle'),
     colorToggle: document.getElementById('colorToggle'),
     animToggle: document.getElementById('animToggle'),
     animBadge: document.getElementById('animBadge'),
@@ -68,13 +69,15 @@
     costVal: document.getElementById('costVal'),
     costLabel: document.getElementById('costLabel'),
     costBar: document.getElementById('costBar'),
-    costLog: document.getElementById('costLog')
+    costLog: document.getElementById('costLog'),
+    fileError: document.getElementById('fileError')
   };
 
   const ctx = els.canvas.getContext('2d', { alpha:false });
 
   let sourceImg = null;
-  let invert = false;
+  let invert = false; // tone mapping: which pixels favor dense vs sparse glyphs — baked in at fit time
+  let displayInvert = false; // display theme: canvas background/glyph colors only — applies instantly
   let colorGlyphs = false;
   let animEnabled = false;
   let lastResult = null;
@@ -109,7 +112,9 @@
   function getActiveCharset(){
     const preset = CHARSETS[els.charset.value];
     if(els.charset.value === 'custom'){
-      const custom = els.customCharset.value.replace(/\s+/g, ' ').trim();
+      // Preserve spaces as-is (space is commonly the "lightest" glyph) —
+      // only strip newlines/tabs so pasted text doesn't break the ramp.
+      const custom = els.customCharset.value.replace(/[\r\n\t]+/g, '');
       return custom || CHARSETS.minimal;
     }
     return preset || CHARSETS.dense;
@@ -350,6 +355,19 @@
   els.invertToggle.addEventListener('click', () => {
     invert = !invert;
     els.invertToggle.classList.toggle('on', invert);
+    els.invertToggle.setAttribute('aria-checked', String(invert));
+    // This changes which pixels get dense vs sparse glyphs — it's baked in
+    // during fitting, so it has no visible effect until the next run.
+    if(lastResult){
+      logLine('tone mapping changed — click "run fit" to apply');
+      els.runBtn.classList.add('stale');
+    }
+  });
+
+  els.displayInvertToggle.addEventListener('click', () => {
+    displayInvert = !displayInvert;
+    els.displayInvertToggle.classList.toggle('on', displayInvert);
+    els.displayInvertToggle.setAttribute('aria-checked', String(displayInvert));
     if(lastResult) renderFrame(0);
   });
 
@@ -383,7 +401,17 @@
     });
   });
 
+  const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB
+  const KNOWN_IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|avif|gif|bmp|svg|ico|tiff?|heic|heif)$/i;
+
   els.drop.addEventListener('click', () => els.fileInput.click());
+
+  els.drop.addEventListener('keydown', e => {
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      els.fileInput.click();
+    }
+  });
 
   els.drop.addEventListener('dragover', e => {
     e.preventDefault();
@@ -406,22 +434,80 @@
     if(e.target.files && e.target.files[0]){
       loadFile(e.target.files[0]);
     }
+    // reset so selecting the same (or a corrected) file again still fires 'change'
+    e.target.value = '';
   });
 
+  // Generic keyboard support for role="switch" elements
+  document.querySelectorAll('[role="switch"]').forEach(el => {
+    el.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        el.click();
+      }
+    });
+  });
+
+  function showFileError(message){
+    if(!els.fileError) return;
+    els.fileError.textContent = message;
+    els.fileError.hidden = false;
+  }
+
+  function clearFileError(){
+    if(!els.fileError) return;
+    els.fileError.hidden = true;
+    els.fileError.textContent = '';
+  }
+
   function loadFile(file){
-    if(!file.type.startsWith('image/')) return;
+    clearFileError();
+
+    if(!file){
+      showFileError('No file was selected.');
+      return;
+    }
+
+    const isAcceptedType = file.type.startsWith('image/');
+    // some browsers/OSes report an empty MIME type for valid images (e.g. certain drag sources) —
+    // fall back to checking the file extension in that case only.
+    const hasImageExtension = KNOWN_IMAGE_EXTENSIONS.test(file.name || '');
+
+    if(!isAcceptedType && !(file.type === '' && hasImageExtension)){
+      showFileError(`"${file.name || 'File'}" isn't a supported image. Please upload an image file (PNG, JPG, WEBP, AVIF, GIF, SVG, BMP...).`);
+      return;
+    }
+
+    if(file.size > MAX_FILE_BYTES){
+      showFileError(`"${file.name}" is too large (${(file.size / (1024*1024)).toFixed(1)}MB). Please use an image under ${MAX_FILE_BYTES / (1024*1024)}MB.`);
+      return;
+    }
 
     const reader = new FileReader();
+
+    reader.onerror = () => {
+      showFileError(`Could not read "${file.name}". The file may be corrupted — try a different image.`);
+    };
 
     reader.onload = ev => {
       const img = new Image();
 
       img.onload = () => {
+        clearFileError();
         sourceImg = img;
         els.thumb.src = ev.target.result;
+        els.thumb.alt = `Preview of uploaded image: ${file.name}`;
+        els.thumb.hidden = false;
         els.thumb.style.display = 'block';
         els.runBtn.disabled = false;
         setStatusForNewSource();
+      };
+
+      img.onerror = () => {
+        showFileError(`"${file.name}" couldn't be decoded. It may be corrupted, or your browser may not support this image format.`);
+        els.thumb.hidden = true;
+        els.thumb.style.display = 'none';
+        els.runBtn.disabled = true;
       };
 
       img.src = ev.target.result;
@@ -465,6 +551,8 @@
 
   async function runFit(){
     if(!sourceImg) return;
+
+    els.runBtn.classList.remove('stale');
 
     plasmaEnabled = false;
     fittedGridSnapshot = null;
@@ -556,7 +644,12 @@
             l = clamp01((l - 0.5) * contrast + 0.5);
             if(invert) l = 1 - l;
 
-            if(patch) patch[y*cellW+x] = l;
+            // The glyph atlas stores *ink density* (0 = blank cell, 1 = fully
+            // inked), ordered so dark pixels should land on dense glyphs and
+            // bright pixels on sparse ones — matching the traditional ramp's
+            // convention below. Store (1-l) here so "gradient" and
+            // "traditional" agree on what invert means.
+            if(patch) patch[y*cellW+x] = 1 - l;
             sumL += l;
             sumR += r;
             sumG += g;
@@ -707,11 +800,11 @@
   }
 
   function getBackground(){
-    return invert ? '#f4f1ea' : '#0b0d0a';
+    return displayInvert ? '#f4f1ea' : '#0b0d0a';
   }
 
   function getDefaultGlyphColor(){
-    return invert ? '#10150f' : '#9dff8f';
+    return displayInvert ? '#10150f' : '#9dff8f';
   }
 
   /*
@@ -987,8 +1080,8 @@
     ctx.font = `${m.fontSize}px "IBM Plex Mono", monospace`;
     ctx.textBaseline = 'top';
     ctx.textAlign = 'left';
-    ctx.shadowBlur = invert ? 0 : Math.min(6,m.fontSize * 0.8);
-    ctx.shadowColor = invert ? 'transparent' : 'rgba(157,255,143,.35)';
+    ctx.shadowBlur = displayInvert ? 0 : Math.min(6,m.fontSize * 0.8);
+    ctx.shadowColor = displayInvert ? 'transparent' : 'rgba(157,255,143,.35)';
 
     for(let y=0;y<lastResult.rowsN;y++){
       const row = lastResult.rows[y];

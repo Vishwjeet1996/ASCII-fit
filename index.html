@@ -3,26 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASCIIfit — image to ascii + wave</title>
+<title>ASCII-fit — image to ASCII art + animation</title>
+<meta name="description" content="Turn any image into ASCII art in your browser. Choose gradient-descent glyph fitting or traditional brightness mapping, then animate the result with wave, ripple, and plasma effects. Runs entirely client-side.">
+<meta name="keywords" content="ascii art generator, image to ascii, ascii converter, text art, ascii animation">
+<meta name="author" content="Vishwajeet Damor">
+<link rel="canonical" href="https://asciifit.example.com/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="ASCII-fit — image to ASCII art + wave animation">
+<meta property="og:description" content="Turn any image into ASCII art in your browser, then animate it with wave, ripple, and plasma effects. Runs entirely client-side.">
+<meta property="og:image" content="https://asciifit.example.com/og-image.png">
+<meta property="og:url" content="https://asciifit.example.com/">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ASCII-fit — image to ASCII art + wave animation">
+<meta name="twitter:description" content="Turn any image into ASCII art in your browser, then animate it with wave, ripple, and plasma effects. Runs entirely client-side.">
+<meta name="twitter:image" content="https://asciifit.example.com/og-image.png">
+
+<link rel="icon" href="favicon.ico" sizes="any">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<a class="skip-link" href="#output">Skip to output</a>
 <div class="wrap">
   <header>
-    <p class="eyebrow">glyph-error minimization or traditional brightness ramp + canvas animations</p>
-    <h1>ASCII-fit<span class="cursor">&nbsp;</span></h1>
+    <p class="eyebrow">image → ascii convertor</p>
+    <h1>ASCII-fit<span class="cursor" aria-hidden="true">&nbsp;</span></h1>
     <p class="sub">Upload an image. Choose a method: gradient descent or traditional mapping. Run Fit. The result will be rendered on one canvas.</p>
   </header>
 
   <div class="top-row">
     <div class="panel source-panel">
       <h2>source</h2>
-      <div class="drop" id="drop">
+      <div class="drop" id="drop" role="button" tabindex="0" aria-label="Upload an image: drop a file here or press Enter to browse">
         <strong>drop image, or click</strong>
-        png / jpg / webp — processed locally
-        <input type="file" id="fileInput" accept="image/*">
+        png / jpg / webp / avif / gif / svg / bmp — processed locally
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/bmp,image/svg+xml,image/x-icon,image/tiff,image/*" aria-label="Choose an image file">
       </div>
-      <img id="thumb" class="thumb">
+      <p class="file-error" id="fileError" role="alert" hidden></p>
+      <img id="thumb" class="thumb" alt="" hidden>
     </div>
   </div>
 
@@ -63,15 +84,22 @@
 
         <label class="field">
           <div class="field-row toggle-row">
-            <span>invert (light bg)</span>
-            <div class="switch" id="invertToggle"></div>
+            <span>invert tone mapping <span class="hint">applies on next run</span></span>
+            <div class="switch" id="invertToggle" role="switch" tabindex="0" aria-checked="false" aria-label="Invert tone mapping — flips which pixels map to dense vs sparse glyphs, applies on next run fit"></div>
+          </div>
+        </label>
+
+        <label class="field">
+          <div class="field-row toggle-row">
+            <span>light display theme</span>
+            <div class="switch" id="displayInvertToggle" role="switch" tabindex="0" aria-checked="false" aria-label="Light display theme — swaps canvas background and glyph colors, applies instantly"></div>
           </div>
         </label>
 
         <label class="field">
           <div class="field-row toggle-row">
             <span>color glyphs</span>
-            <div class="switch" id="colorToggle"></div>
+            <div class="switch" id="colorToggle" role="switch" tabindex="0" aria-checked="false" aria-label="Color glyphs"></div>
           </div>
         </label>
 
@@ -84,7 +112,7 @@
         <label class="field">
           <div class="field-row toggle-row">
             <span>enable wave</span>
-            <div class="switch" id="animToggle"></div>
+            <div class="switch" id="animToggle" role="switch" tabindex="0" aria-checked="false" aria-label="Enable wave animation"></div>
           </div>
         </label>
 
@@ -130,7 +158,7 @@
         <label class="field" style="margin-top:12px">
           <div class="field-row toggle-row">
             <span>mouse ripples <span style="color:var(--phosphor-dim);font-size:10px">move over output</span></span>
-            <div class="switch on" id="rippleToggle"></div>
+            <div class="switch on" id="rippleToggle" role="switch" tabindex="0" aria-checked="true" aria-label="Enable mouse ripples"></div>
           </div>
         </label>
 
@@ -146,7 +174,7 @@
         <label class="field">
           <div class="field-row toggle-row">
             <span>enable plasma</span>
-            <div class="switch" id="plasmaToggle"></div>
+            <div class="switch" id="plasmaToggle" role="switch" tabindex="0" aria-checked="false" aria-label="Enable procedural plasma"></div>
           </div>
         </label>
 
@@ -183,7 +211,7 @@
       </div>
   </div>
 
-    <div class="output-row">
+    <div class="output-row" id="output">
     <div class="panel output-panel">
         <div class="output-head">
           <h2>output</h2>
@@ -215,7 +243,7 @@
   </div>
 
   <footer>
-    <a class="bmc-btn" href="https://ko-fi.com/vishwajeetdamor" target="_blank" rel="noopener"><svg class="bmc-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg> Buy me a coffee</a>
+    <a class="bmc-btn" href="https://ko-fi.com/vishwajeetdamor" target="_blank" rel="noopener"><img class="bmc-icon" src="https://storage.ko-fi.com/cdn/cup-border.png" alt="" width="20" height="20"> Buy me a coffee</a>
     <div class="foot-note">Have Fun!</div>
   </footer>
 </div>
